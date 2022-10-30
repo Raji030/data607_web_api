@@ -1,0 +1,63 @@
+---
+title: "Data607_Web_API"
+author: "Mahmud Hasan Al Raji"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Introduction: The New York Times web site provides a rich set of APIs (link: https://developer.nytimes.com/apis). For this assignment, my task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it into an R DataFrame. Here, I chose the movie critics JSON data for all reviewer from New York Times Movie Review APIs.
+
+
+# Loading libraries 
+```{r }
+library(jsonlite)
+library(httr)
+library(ggplot2)
+library(dplyr)
+
+```
+
+# Constructing an interface with required API and checking the response 
+```{r }
+# link to the API output as a JSON file
+url_json <- "https://api.nytimes.com/svc/movies/v2/critics/all.json?api-key=VAhjWqxLrMQTPsvIOYxaH7gFuKWE79en"
+#get the raw json into R
+resp <- GET(url_json)
+resp
+```
+
+# Reading movie critics JSON data and converting it into a R dataframe
+```{r }
+critics_data<- fromJSON(rawToChar(resp$content))%>% data.frame
+glimpse(critics_data)
+```
+
+# Data tidying and subsetting 
+```{r }
+#Renaming two columns
+critics_data<-rename(critics_data,critic_name=results.display_name,critic_status=results.status)
+#Sub setting data frame with new column names
+critics_data1<-select(critics_data,critic_name,critic_status)
+head(critics_data1)
+#Replace empty value with NA in critic_status column
+critics_data1$critic_status[critics_data1$critic_status==''] <- NA
+head(critics_data1)
+#Finding critics status count data
+critics_status_count_data <- critics_data1 %>% count(critic_status)
+critics_status_count_data
+```
+
+# Plotting critics status based on their occuring number
+```{r}
+ggplot(data=critics_status_count_data, aes(x=critic_status, y=n)) +
+  geom_bar(stat="identity") + 
+    labs(
+      x = "Critic Status",
+      y = "Number of Critic Status",
+      title = "The number of critic status"
+    ) + 
+    coord_flip()
+```
+
+# Conclusion: In this assignment, I chose movie critics data for all reviewer from New York Times Movie Review API.I collected JSON data through a API connection and transformed that JSON data into a R data frame. Finally, I plotted a bar graph to see the critics status based on their occuring numbers.
+
